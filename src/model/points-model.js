@@ -1,36 +1,49 @@
 import Observable from '../framework/observable.js';
-import { pointsMocks } from './mocks.js';
+import { UpdateType } from '../const.js';
 
 export default class PointsModel extends Observable {
   #points = [];
+  #apiService = null;
 
-  constructor() {
+  constructor(apiService) {
     super();
-    this.#points = pointsMocks;
+    this.#apiService = apiService;
   }
 
   get points() {
-    return this.#points;
+    return [...this.#points];
   }
 
-  set points(points) {
-    this.#points = points;
+  async init() {
+    try {
+      const points = await this.#apiService.points;
+      this.#points = points.map((point) => this.#apiService.adaptPointToClient(point));
+      this._notify(UpdateType.INIT);
+    } catch {
+      this.#points = [];
+    }
   }
 
-  updatePoint(updateType, update) {
+  async updatePoint(updateType, update) {
     const index = this.#points.findIndex((point) => point.id === update.id);
 
     if (index === -1) {
       throw new Error('Can\'t update unexisting point');
     }
 
-    this.#points = [
-      ...this.#points.slice(0, index),
-      update,
-      ...this.#points.slice(index + 1),
-    ];
+    try {
+      const response = await this.#apiService.updatePoint(update);
 
-    this._notify(updateType, update);
+      this.#points = [
+        ...this.#points.slice(0, index),
+        response,
+        ...this.#points.slice(index + 1),
+      ];
+
+      this._notify(updateType, response);
+    } catch (err) {
+      throw new Error('Can\'t update point on server');
+    }
   }
 
   addPoint(updateType, update) {

@@ -3,7 +3,6 @@ import AddFormView from '../view/add-form-view.js';
 import EditFormView from '../view/edit-form-view.js';
 import { render, replace, remove } from '../framework/render.js';
 import { UserAction, UpdateType } from '../const.js';
-import { nanoid } from 'nanoid';
 
 const Mode = {
   DEFAULT: 'DEFAULT',
@@ -41,7 +40,8 @@ export default class PointPresenter {
     const prevPointEditComponent = this.#pointEditComponent;
 
     const destination = this.#destinations.find((dest) => dest.id === point.destination);
-    const offersByType = this.#offers.find((opt) => opt.type === point.type).offers;
+
+    const offersByType = this.#offers.find((opt) => opt.type === point.type)?.offers || [];
     const selectedOffers = offersByType.filter((opt) => point.offers.includes(opt.id));
 
     this.#pointComponent = new PointView(point, destination, selectedOffers, {
@@ -82,13 +82,16 @@ export default class PointPresenter {
 
   initAddForm(destinations, offers, onAddFormClose) {
     this.#mode = Mode.ADD;
+    if(this.#pointEditComponent) {
+      remove(this.#pointEditComponent);
+    }
     this.#destinations = destinations;
     this.#offers = offers;
     this.#destroyAddFormCallback = onAddFormClose;
 
     const defaultPoint = {
-      type: destinations[0].type || 'taxi',
-      destination: destinations[0].id || '',
+      type: 'taxi',
+      destination: destinations[0].id,
       basePrice: 110,
       dateFrom: '2026-04-10T22:55:56.845Z',
       dateTo: '2026-04-11T11:22:13.375Z',
@@ -102,7 +105,7 @@ export default class PointPresenter {
       this.#offers,
       {
         onFormSubmit: (newPoint) => {
-          this.#changeData(UserAction.ADD_POINT, UpdateType.MINOR, { ...newPoint, id: nanoid() });
+          this.#changeData(UserAction.ADD_POINT, UpdateType.MINOR, { ...newPoint, id: crypto.randomUUID() });
           this.#replaceAddFormToPoint();
         },
         onRollupClick: () => {

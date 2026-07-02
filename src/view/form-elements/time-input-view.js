@@ -76,10 +76,10 @@ export default class TimeInputView extends AbstractView {
         ...commonConfigs,
         defaultDate: this.#dateTo,
         minDate: this.#dateFrom,
-        onChange: (userDate) => {
+        onChange: ([userDate]) => {
           this.#dateTo = userDate;
           this.#handleDateChange(userDate, 'dateTo');
-          this.#datepickerFrom.set('maxDate', userDate);
+          this.#datepickerFrom.set('maxDate', new Date('December 31, 2027'));
         },
       },
     );

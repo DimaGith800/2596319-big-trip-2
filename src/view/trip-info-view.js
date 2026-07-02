@@ -1,12 +1,11 @@
 import AbstractView from '../framework/view/abstract-view';
 
-function createElementTemplate(points, offers) {
-  const destinations = points.map((obj) => obj.destination);
-
+function createElementTemplate(points, destinations, offers) {
+  const firstPointsDestination = destinations.find((dest) => dest.id === points[0].destination);
+  const lastPointsDestination = destinations.find((dest) => dest.id === points[points.length - 1].destination);
   const route = destinations.length <= 3
     ? destinations.join(' &mdash; ')
-    : `${destinations[0]} &mdash; ... &mdash; ${destinations[destinations.length - 1]}`;
-
+    : `${firstPointsDestination.name} &mdash; ... &mdash; ${lastPointsDestination.name}`;
   const totalCost = points.reduce((sum, point) => {
     const offerByType = offers.find((offer) => offer.type === point.type);
     const availableOffers = offerByType ? offerByType.offers : [];
@@ -33,15 +32,17 @@ function createElementTemplate(points, offers) {
 
 export default class TripInfoView extends AbstractView {
   #points = null;
+  #destinations = null;
   #offers = null;
 
-  constructor(points, offers) {
+  constructor(points, destinations, offers) {
     super();
     this.#points = points;
+    this.#destinations = destinations;
     this.#offers = offers;
   }
 
   get template() {
-    return createElementTemplate(this.#points, this.#offers);
+    return createElementTemplate(this.#points, this.#destinations, this.#offers);
   }
 }

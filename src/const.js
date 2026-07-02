@@ -26,7 +26,8 @@ const SortType = {
 const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
-  MAJOR: 'MAJOR'
+  MAJOR: 'MAJOR',
+  INIT: 'INIT'
 };
 
 const FilterType = {
@@ -44,5 +45,8 @@ const UserAction = {
   DELETE_POINT: 'DELETE_POINT'
 };
 
-export { BlankPoint, Texts, SortType, UserAction, UpdateType, FilterType, DEFAULT_FILTER_TYPE };
+const API_ENDPOINT = 'https://22.objects.htmlacademy.pro/big-trip';
+const API_AUTHORIZATION = 'Basic qefwy73ogjeppj9';
+
+export { BlankPoint, Texts, SortType, UserAction, UpdateType, FilterType, DEFAULT_FILTER_TYPE, API_ENDPOINT, API_AUTHORIZATION };
 

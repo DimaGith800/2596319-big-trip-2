@@ -2,6 +2,7 @@ import SortView from '../view/sort-view.js';
 import { render, remove } from '../framework/render.js';
 import ListView from '../view/form-elements/list-view.js';
 import NoEventView from '../view/no-event-view.js';
+import LoadingView from '../view/loading-view.js';
 import TripInfoView from '../view/trip-info-view.js';
 import NewEventButtonView from '../view/new-event-button-view.js';
 import { RenderPosition } from '../render.js';
@@ -23,6 +24,8 @@ export default class BoardPresenter {
   #newEventButtonComponent = null;
   #newPointPresenter = null;
   #isAddFormOpen = false;
+  #loadingScreenComponent = new LoadingView();
+  #isLoading = true;
 
   constructor({ boardHeader, boardContainer, pointsModel, destinationsModel, offersModel, filterModel }) {
     this.boardHeader = boardHeader;
@@ -60,11 +63,8 @@ export default class BoardPresenter {
   }
 
   init() {
-    this.destinations = [...this.destinationsModel.destinations];
-    this.offers = [...this.offersModel.offers];
-
+    render(this.#loadingScreenComponent, this.boardContainer);
     this.#renderNewEventButton();
-    this.#renderBoard();
   }
 
   #renderNewEventButton() {
@@ -81,7 +81,9 @@ export default class BoardPresenter {
   }
 
   #handleNewEventButtonClick = () => {
-    remove(this.#noEventComponent);
+    if (this.#noEventComponent) {
+      remove(this.#noEventComponent);
+    }
     this.#isAddFormOpen = true;
     this.#renderNewEventButton();
     this.#handleModeChange();
@@ -124,6 +126,13 @@ export default class BoardPresenter {
         this.#clearBoard({ resetSortType: true });
         this.#renderBoard();
         break;
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#loadingScreenComponent);
+        this.destinations = this.destinationsModel.destinations;
+        this.offers = this.offersModel.offers;
+        this.#renderBoard();
+        break;
     }
   };
 
@@ -151,6 +160,11 @@ export default class BoardPresenter {
   }
 
   #renderBoard() {
+    if (this.#isLoading) {
+      render(this.#loadingScreenComponent, this.boardContainer);
+      return;
+    }
+
     const points = this.points;
     const pointsCount = points.length;
 
@@ -160,7 +174,7 @@ export default class BoardPresenter {
       return;
     }
 
-    this.#tripInfoComponent = new TripInfoView(points, this.offers);
+    this.#tripInfoComponent = new TripInfoView(this.pointsModel.points, this.destinations, this.offers);
     render(this.#tripInfoComponent, this.boardHeader, RenderPosition.AFTERBEGIN);
 
     this.#sortComponent = new SortView({
