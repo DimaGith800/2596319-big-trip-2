@@ -82,6 +82,9 @@ export default class PointPresenter {
 
   initAddForm(destinations, offers, onAddFormClose) {
     this.#mode = Mode.ADD;
+    if(this.#pointEditComponent) {
+      remove(this.#pointEditComponent);
+    }
     this.#destinations = destinations;
     this.#offers = offers;
     this.#destroyAddFormCallback = onAddFormClose;

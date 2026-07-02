@@ -81,7 +81,9 @@ export default class BoardPresenter {
   }
 
   #handleNewEventButtonClick = () => {
-    remove(this.#noEventComponent);
+    if (this.#noEventComponent) {
+      remove(this.#noEventComponent);
+    }
     this.#isAddFormOpen = true;
     this.#renderNewEventButton();
     this.#handleModeChange();
