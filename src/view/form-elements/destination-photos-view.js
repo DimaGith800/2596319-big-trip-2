@@ -9,8 +9,8 @@ function createElementTemplate(pictures) {
     .map((picture) => `<img class="event__photo" src="${picture.src}" alt="${picture.description}">`)
     .join('');
 
-  return `<div class="event__photos-container" bis_skin_checked="1">
-            <div class="event__photos-tape" bis_skin_checked="1">
+  return `<div class="event__photos-container">
+            <div class="event__photos-tape">
               ${photosTape}
             </div>
           </div>`;

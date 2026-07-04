@@ -1,11 +1,23 @@
 import AbstractView from '../framework/view/abstract-view';
+import { sortPointsByDay } from '../utils.js';
+import dayjs from 'dayjs';
 
 function createElementTemplate(points, destinations, offers) {
-  const firstPointsDestination = destinations.find((dest) => dest.id === points[0].destination);
-  const lastPointsDestination = destinations.find((dest) => dest.id === points[points.length - 1].destination);
-  const route = destinations.length <= 3
+  if (destinations.length === 0) {
+    return '';
+  }
+  const sortedPointsByDay = [...points].sort(sortPointsByDay);
+  const firstPointsDestination = destinations.find((dest) => dest.id === sortedPointsByDay[0].destination) || '';
+  const lastPointsDestination = destinations.find((dest) => dest.id === sortedPointsByDay[sortedPointsByDay.length - 1].destination) || '';
+  const routeStartDate = dayjs(sortedPointsByDay[0].dateFrom).format('MMM DD');
+  const routeEndDate = dayjs(sortedPointsByDay[sortedPointsByDay.length - 1].dateFrom).format('MMM DD');
+
+  let route = points.length <= 3 && points.length >= 2
     ? destinations.join(' &mdash; ')
     : `${firstPointsDestination.name} &mdash; ... &mdash; ${lastPointsDestination.name}`;
+  if (points.length === 1) {
+    route = destinations[0].name;
+  }
   const totalCost = points.reduce((sum, point) => {
     const offerByType = offers.find((offer) => offer.type === point.type);
     const availableOffers = offerByType ? offerByType.offers : [];
@@ -21,7 +33,7 @@ function createElementTemplate(points, destinations, offers) {
     `<section class="trip-main__trip-info  trip-info">
       <div class="trip-info__main">
         <h1 class="trip-info__title">${route}</h1>
-        <p class="trip-info__dates">Mar 18&nbsp;&mdash;&nbsp;21</p>
+        <p class="trip-info__dates">${routeStartDate}&nbsp;&mdash;&nbsp;${routeStartDate.split(' ')[0] === routeEndDate.split(' ')[0] ? routeEndDate.split(' ')[1] : routeEndDate}</p>
       </div>
       <p class="trip-info__cost">
         Total: &euro;&nbsp;<span class="trip-info__cost-value">${totalCost}</span>

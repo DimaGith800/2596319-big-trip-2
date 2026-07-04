@@ -25,7 +25,9 @@ export default class BoardPresenter {
   #newPointPresenter = null;
   #isAddFormOpen = false;
   #loadingScreenComponent = new LoadingView();
+  #failedLoadingScreenComponent = new LoadingView(true);
   #isLoading = true;
+  #isLoadingFailed = false;
 
   constructor({ boardHeader, boardContainer, pointsModel, destinationsModel, offersModel, filterModel }) {
     this.boardHeader = boardHeader;
@@ -84,9 +86,8 @@ export default class BoardPresenter {
     remove(this.#noEventComponent);
     this.#isAddFormOpen = true;
     this.#renderNewEventButton();
-    this.#handleModeChange();
     this.#filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
-
+    this.#handleModeChange();
     this.#newPointPresenter.initAddForm(
       this.destinations,
       this.offers,
@@ -97,16 +98,16 @@ export default class BoardPresenter {
     );
   };
 
-  #handleViewAction = (actionType, updateType, update) => {
+  #handleViewAction = async (actionType, updateType, update) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
-        this.pointsModel.updatePoint(updateType, update);
+        await this.pointsModel.updatePoint(updateType, update);
         break;
       case UserAction.ADD_POINT:
-        this.pointsModel.addPoint(updateType, update);
+        await this.pointsModel.addPoint(updateType, update);
         break;
       case UserAction.DELETE_POINT:
-        this.pointsModel.deletePoint(updateType, update);
+        await this.pointsModel.deletePoint(updateType, update);
         break;
     }
   };
@@ -130,6 +131,12 @@ export default class BoardPresenter {
         this.destinations = this.destinationsModel.destinations;
         this.offers = this.offersModel.offers;
         this.#renderBoard();
+        break;
+      case UpdateType.ERROR:
+        this.#isLoading = false;
+        this.#isLoadingFailed = true;
+        remove(this.#loadingScreenComponent);
+        render(this.#failedLoadingScreenComponent, this.boardContainer);
         break;
     }
   };
@@ -200,12 +207,13 @@ export default class BoardPresenter {
     this.#pointPresenters.set(point.id, pointPresenter);
   }
 
-  #renderNoEvents(currentFilter) {
+  #renderNoEvents(currentFilter = 'EVERYTHING') {
     this.#noEventComponent = new NoEventView({ filterType: currentFilter });
     render(this.#noEventComponent, this.boardContainer);
   }
 
   #handleModeChange = () => {
+    this.#newPointPresenter.destroy();
     this.#pointPresenters.forEach((presenter) => presenter.resetPoint());
   };
 }

@@ -21,6 +21,7 @@ export default class PointsModel extends Observable {
       this._notify(UpdateType.INIT);
     } catch {
       this.#points = [];
+      this._notify(UpdateType.ERROR);
     }
   }
 
@@ -42,31 +43,44 @@ export default class PointsModel extends Observable {
 
       this._notify(updateType, response);
     } catch (err) {
-      throw new Error('Can\'t update point on server');
+      this._notify(UpdateType.ERROR);
+      throw new Error('Uncaught update point error');
     }
   }
 
-  addPoint(updateType, update) {
-    this.#points = [
-      update,
-      ...this.#points,
-    ];
+  async addPoint(updateType, update) {
+    try {
+      const response = await this.#apiService.addPoint(update);
 
-    this._notify(updateType, update);
+      this.#points = [
+        response,
+        ...this.#points,
+      ];
+
+      this._notify(updateType, response);
+    } catch (err) {
+      throw new Error('Can\'t add point on server');
+    }
   }
 
-  deletePoint(updateType, update) {
+  async deletePoint(updateType, update) {
     const index = this.#points.findIndex((point) => point.id === update.id);
 
     if (index === -1) {
       throw new Error('Can\'t delete unexisting point');
     }
 
-    this.#points = [
-      ...this.#points.slice(0, index),
-      ...this.#points.slice(index + 1),
-    ];
+    try {
+      await this.#apiService.deletePoint(update);
 
-    this._notify(updateType, update);
+      this.#points = [
+        ...this.#points.slice(0, index),
+        ...this.#points.slice(index + 1),
+      ];
+
+      this._notify(updateType, update);
+    } catch (err) {
+      throw new Error('Can\'t delete point on server');
+    }
   }
 }

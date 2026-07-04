@@ -1,4 +1,4 @@
-import { BlankPoint } from '../const.js';
+import { BlankPoint, State } from '../const.js';
 import EventTypeView from './form-elements/event-type-view.js';
 import DestinationInputView from './form-elements/destination-input-view.js';
 import TimeInputView from './form-elements/time-input-view.js';
@@ -9,7 +9,7 @@ import DestinationBlockView from './form-elements/destination-block-view.js';
 import RollupButtonView from './form-elements/rollup-button-view.js';
 import OffersCheckboxesContainerView from './form-elements/offers-checkboxes-container.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import { render } from '../render.js';
+import { render, replace } from '../framework/render.js';
 
 function createElementTemplate() {
   return (
@@ -28,6 +28,7 @@ export default class AddFormView extends AbstractStatefulView {
   #handleFormSubmit = null;
   #handleRollupClick = null;
   #handleFormCancelButtonClick = null;
+  #savingButtonView = new SaveButtonView(true);
 
   constructor(point = BlankPoint, allDestinations, allOffers, { onFormSubmit, onRollupClick, onCancelButtonClick }) {
     super();
@@ -36,9 +37,7 @@ export default class AddFormView extends AbstractStatefulView {
     this.#handleFormSubmit = onFormSubmit;
     this.#handleRollupClick = onRollupClick;
     this.#handleFormCancelButtonClick = onCancelButtonClick;
-
     this._setState(AddFormView.parsePointToState(point));
-
     this._restoreHandlers();
   }
 
@@ -53,7 +52,7 @@ export default class AddFormView extends AbstractStatefulView {
     this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollupClickHandler);
     this.element.querySelector('.event__type-list').addEventListener('change', this.#typeChangeHandler);
     this.element.querySelector('.event__input--destination').addEventListener('change', this.#destinationChangeHandler);
-    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#handleFormCancelButtonClick);
+    this.element.querySelector('.event__reset-btn').addEventListener('click', this.#formCancelClickHandler);
     this.element.querySelectorAll('.event__offer-selector').forEach((checkbox) => checkbox.addEventListener('change', this.#offersChangeHandler));
     this.element.querySelector('.event__input--price').addEventListener('input', this.#priceInputChangeHandler);
   }
@@ -76,12 +75,19 @@ export default class AddFormView extends AbstractStatefulView {
     this.timeInputView = new TimeInputView(this._state.dateFrom, this._state.dateTo, {
       dateChangeHandler: this.#dateChangeHandler
     });
+    this.DestinationInputView = new DestinationInputView(this._state.type, currentDestination, this.#allDestinations);
+
     render(new EventTypeView(this._state.type), header);
-    render(new DestinationInputView(this._state.type, currentDestination, this.#allDestinations), header);
+    render(this.DestinationInputView, header);
     render(this.timeInputView, header);
-    render(new PriceInputView(this._state.basePrice), header);
-    render(new SaveButtonView(), header);
-    render(new CancelButtonView(), header);
+
+    render(new PriceInputView(this._state.basePrice, this._state.isSaving), header);
+
+    this.saveButtonView = new SaveButtonView(this._state.isSaving);
+    render(this.saveButtonView, header);
+
+    this.CancelButtonView = new CancelButtonView(this._state.isCancelling);
+    render(this.CancelButtonView, header);
     render(new RollupButtonView(), header);
 
     if (offersByType && offersByType.offers && offersByType.offers.length > 0) {
@@ -89,6 +95,37 @@ export default class AddFormView extends AbstractStatefulView {
     }
 
     render(new DestinationBlockView(description), details);
+  }
+
+  setViewActionState(state) {
+    switch (state) {
+      case State.SAVING:
+        this.updateElement({
+          isDisabled: true,
+          isSaving: true
+        });
+        break;
+      case State.DELETING:
+        this.updateElement({
+          isDisabled: true,
+          isDeleting: true
+        });
+        break;
+      case State.ABORTING: {
+        const resetFormState = () => {
+          this.updateElement({
+            isDisabled: false,
+            isSaving: false,
+            isDeleting: false,
+          });
+        };
+        this.element.querySelectorAll('input, select, textarea, button, span').forEach((element) => {
+          element.disabled = false;
+        });
+        this.shake(resetFormState);
+        break;
+      }
+    }
   }
 
   #typeChangeHandler = (evt) => {
@@ -155,6 +192,16 @@ export default class AddFormView extends AbstractStatefulView {
     });
   };
 
+  #formCancelClickHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFormCancelButtonClick(AddFormView.parseStateToPoint(this._state));
+    replace(new CancelButtonView(true), this.CancelButtonView);
+    this.element.querySelectorAll('input, select, textarea, button, span').forEach((element) => {
+      element.disabled = true;
+    });
+    this.timeInputView.removeTimeInput();
+  };
+
   #dateChangeHandler = (userDate, type) => {
     this._setState({
       [type]: userDate,
@@ -164,11 +211,20 @@ export default class AddFormView extends AbstractStatefulView {
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
     this.#handleFormSubmit(AddFormView.parseStateToPoint(this._state));
+    replace(new SaveButtonView(true), this.saveButtonView);
+    this.element.querySelectorAll('input, select, textarea, button, span').forEach((element) => {
+      element.disabled = true;
+    });
+    if (this.timeInputView) {
+      this.timeInputView.removeTimeInput();
+    }
   };
 
   destroy = () => {
     super.removeElement();
-    this.timeInputView.removeTimeInput();
+    if (this.timeInputView) {
+      this.timeInputView.removeTimeInput();
+    }
   };
 
   #rollupClickHandler = (evt) => {

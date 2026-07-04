@@ -27,7 +27,8 @@ const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
-  INIT: 'INIT'
+  INIT: 'INIT',
+  ERROR: 'ERROR'
 };
 
 const FilterType = {
@@ -47,6 +48,27 @@ const UserAction = {
 
 const API_ENDPOINT = 'https://22.objects.htmlacademy.pro/big-trip';
 const API_AUTHORIZATION = 'Basic qefwy73ogjeppj9';
+const UI_BLOCKER_LOWER_LIMIT = 350;
+const UI_BLOCKER_UPPER_LIMIT = 1000;
 
-export { BlankPoint, Texts, SortType, UserAction, UpdateType, FilterType, DEFAULT_FILTER_TYPE, API_ENDPOINT, API_AUTHORIZATION };
+const State = {
+  SAVING: 'SAVING',
+  DELETING: 'DELETING',
+  ABORTING: 'ABORTING'
+};
+
+export {
+  BlankPoint,
+  Texts,
+  SortType,
+  UserAction,
+  UpdateType,
+  FilterType,
+  DEFAULT_FILTER_TYPE,
+  API_ENDPOINT,
+  API_AUTHORIZATION,
+  UI_BLOCKER_LOWER_LIMIT,
+  UI_BLOCKER_UPPER_LIMIT,
+  State
+};
 
